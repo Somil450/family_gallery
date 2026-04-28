@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Family media ──────────────────────────────────────────────────────────
+
+    match /families/{familyId}/{uploaderUid}/{timestamp}/{file} {
+
+      function isFamilyMember() {
+        return request.auth != null
+               && request.auth.uid in firestore.get(
+                    /databases/(default)/documents/families/$(familyId)
+                  ).data.memberUids;
+      }
+
+      function isFamilyAdmin() {
+        return request.auth != null
+               && firestore.get(
+                    /databases/(default)/documents/families/$(familyId)
+                  ).data.adminUid == request.auth.uid;
+      }
+
+      // Any family member can read media
+      allow read: if isFamilyMember();
+
+      // Uploader must be the authenticated user writing to their own subfolder
+      // File size ≤ 500 MB, must be image or video
+      allow write: if isFamilyMember()
+                   && request.auth.uid == uploaderUid
+                   && request.resource.size <= 524288000
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType.matches('video/.*'));
+
+      // Uploader or admin can delete
+      allow delete: if request.auth != null
+                    && (request.auth.uid == uploaderUid || isFamilyAdmin());
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

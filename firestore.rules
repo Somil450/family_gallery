@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ──────────────────────────────────────────────────────
+
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isAuthed() && request.auth.uid == uid;
+    }
+
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function isFamilyMember(familyId) {
+      return isAuthed() &&
+             request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.memberUids;
+    }
+
+    function isFamilyAdmin(familyId) {
+      return isAuthed() &&
+             get(/databases/$(database)/documents/families/$(familyId)).data.adminUid == request.auth.uid;
+    }
+
+    // ─── Users ─────────────────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      // Only the user themselves can read/write their own doc
+      allow read:   if isUser(userId);
+      allow create: if isUser(userId);
+      allow update: if isUser(userId)
+                    // Prevent users from self-granting admin role
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+                       || isFamilyAdmin(resource.data.familyId);
+      allow delete: if false; // Soft-delete only
+    }
+
+    // ─── Families ──────────────────────────────────────────────────────────────
+
+    match /families/{familyId} {
+      allow read:   if isFamilyMember(familyId);
+
+      // Anyone authenticated can create a family (they become admin via Cloud Function / client)
+      allow create: if isAuthed()
+                    && request.resource.data.adminUid == request.auth.uid
+                    && request.resource.data.memberUids.hasAll([request.auth.uid])
+                    && request.resource.data.storageLimitBytes <= 10737418240; // max 10GB
+
+      // Only admin can update invite code, name, limits
+      allow update: if isFamilyAdmin(familyId)
+                    // Members can add themselves when joining (memberUids only)
+                    || (isFamilyMember(familyId)
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']));
+
+      allow delete: if isFamilyAdmin(familyId);
+    }
+
+    // ─── Media ─────────────────────────────────────────────────────────────────
+
+    match /media/{mediaId} {
+      // Any family member can read media in their family
+      allow read: if isAuthed()
+                  && isFamilyMember(resource.data.familyId);
+
+      // Any family member can upload to their own family
+      allow create: if isAuthed()
+                    && isFamilyMember(request.resource.data.familyId)
+                    && request.resource.data.uploaderUid == request.auth.uid
+                    && request.resource.data.sizeBytes <= 524288000; // max 500MB per file
+
+      // Only uploader or admin can update/delete
+      allow update: if isAuthed()
+                    && (resource.data.uploaderUid == request.auth.uid
+                        || isFamilyAdmin(resource.data.familyId))
+                    // Prevent changing familyId after creation
+                    && request.resource.data.familyId == resource.data.familyId;
+
+      allow delete: if isAuthed()
+                    && (resource.data.uploaderUid == request.auth.uid
+                        || isFamilyAdmin(resource.data.familyId));
+    }
+
+    // ─── Albums ────────────────────────────────────────────────────────────────
+
+    match /families/{familyId}/albums/{albumId} {
+      // Only members listed in allowedUids can read private albums
+      allow read: if isAuthed()
+                  && (isFamilyAdmin(familyId)
+                      || request.auth.uid in resource.data.allowedUids);
+
+      allow create: if isFamilyMember(familyId)
+                    && request.resource.data.createdByUid == request.auth.uid;
+
+      // Creator or admin can update
+      allow update: if isAuthed()
+                    && (resource.data.createdByUid == request.auth.uid
+                        || isFamilyAdmin(familyId));
+
+      allow delete: if isAuthed()
+                    && (resource.data.createdByUid == request.auth.uid
+                        || isFamilyAdmin(familyId));
+    }
+
+  }
+}
