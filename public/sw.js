@@ -3,18 +3,57 @@
  * Handles Web Share Target POST requests and forwards files to the main app.
  */
 
-const CACHE_NAME = 'famvault-v1';
+const CACHE_NAME = 'famvault-v2';
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon.svg'
+];
 
 // ── Install / Activate ────────────────────────────────────────────────────────
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+  );
+  self.skipWaiting();
+});
 
-// ── Share Target POST handler ─────────────────────────────────────────────────
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// ── Share Target & Offline Fallback ───────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // 1. Handle Web Share Target POST
   if (url.pathname === '/share-target' && event.request.method === 'POST') {
     event.respondWith(handleShareTarget(event.request));
+    return;
+  }
+
+  // 2. Network-first strategy for navigation / app shell
+  if (event.request.mode === 'navigate' || APP_SHELL.includes(url.pathname)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Clone and update cache
+          const resClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+          return response;
+        })
+        .catch(() => caches.match(event.request) || caches.match('/'))
+    );
     return;
   }
 });
