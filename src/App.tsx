@@ -11,6 +11,7 @@ import GalleryScreen from './pages/Gallery/GalleryScreen';
 import UploadScreen from './pages/Upload/UploadScreen';
 import TimelineScreen from './pages/Timeline/TimelineScreen';
 import ProfileScreen from './pages/Profile/ProfileScreen';
+import { useInstallPrompt } from './hooks/useInstallPrompt';
 import './index.css';
 
 type Tab = 'home' | 'gallery' | 'upload' | 'timeline' | 'profile';
@@ -36,6 +37,9 @@ function AppInner() {
 
   // Handle files shared from other apps
   const { sharedFiles, shareActive, dismissShare } = useShareTarget(() => setActiveTab('gallery'));
+
+  // Install Prompt
+  const { isInstallable, promptInstall } = useInstallPrompt();
 
   // Loading splash
   if (loading) {
@@ -73,6 +77,27 @@ function AppInner() {
 
   return (
     <div className="app-shell">
+      {/* Install App Banner (Android/Chrome only) */}
+      <AnimatePresence>
+        {isInstallable && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 200 }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 800, fontSize: 14 }}>Install FamVault</span>
+              <span style={{ fontSize: 12, opacity: 0.9 }}>Add to home screen for the full app experience</span>
+            </div>
+            <button
+              onClick={promptInstall}
+              style={{ background: '#fff', color: 'var(--accent)', border: 'none', borderRadius: 99, padding: '6px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+            >
+              Install
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Screen */}
       <AnimatePresence mode="wait">
         <motion.div
