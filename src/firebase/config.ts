@@ -5,13 +5,13 @@ import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyCSBcUxynTbwjarSvFk3_Rz2spYPGNVfz4",
+  authDomain: "famvault-dd2a1.firebaseapp.com",
+  projectId: "famvault-dd2a1",
+  storageBucket: "famvault-dd2a1.firebasestorage.app",
+  messagingSenderId: "946254449780",
+  appId: "1:946254449780:web:0346a81f983ac8c7c75521",
+  measurementId: "G-JQQ7HG4B13"
 };
 
 // Check if we have real Firebase credentials (not the demo placeholders)
