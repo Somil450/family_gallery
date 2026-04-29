@@ -24,30 +24,6 @@ const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
   { id: 'profile',  icon: <User size={20} />,    label: 'Profile' },
 ];
 
-function InstallBanner({ isInstallable, promptInstall }: { isInstallable: boolean; promptInstall: () => void }) {
-  return (
-    <AnimatePresence>
-      {isInstallable && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 200, flexShrink: 0 }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: 800, fontSize: 14 }}>Install FamVault</span>
-            <span style={{ fontSize: 12, opacity: 0.9 }}>Add to home screen for the full app experience</span>
-          </div>
-          <button
-            onClick={promptInstall}
-            style={{ background: '#fff', color: 'var(--accent)', border: 'none', borderRadius: 99, padding: '6px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
-          >
-            Install
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
 function AppInner() {
   const { userDoc, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -86,7 +62,6 @@ function AppInner() {
   if (!userDoc?.familyId) {
     return (
       <div className="app-shell" style={{ overflow: 'auto' }}>
-        <InstallBanner isInstallable={isInstallable} promptInstall={promptInstall} />
         <OnboardingScreen />
       </div>
     );
@@ -102,9 +77,6 @@ function AppInner() {
 
   return (
     <div className="app-shell">
-      {/* Install App Banner (Android/Chrome only) */}
-      <InstallBanner isInstallable={isInstallable} promptInstall={promptInstall} />
-
       {/* Screen */}
       <AnimatePresence mode="wait">
         <motion.div

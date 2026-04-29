@@ -18,6 +18,8 @@ import {
 import { signInWithGoogle } from '../../firebase/auth';
 import { createFamily, joinFamilyByCode } from '../../firebase/firestore';
 
+import { useInstallPrompt } from '../../hooks/useInstallPrompt';
+
 type Step = 'welcome' | 'name' | 'family-choice' | 'create' | 'join' | 'firebase-auth';
 
 const slide = {
@@ -33,6 +35,8 @@ export default function OnboardingScreen() {
   const [familyName, setFamilyName] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const { isInstallable, promptInstall } = useInstallPrompt();
 
   // Check URL for auto-join code (?join=XXXXXX)
   useEffect(() => {
@@ -242,6 +246,12 @@ export default function OnboardingScreen() {
               ) : (
                 <button className="btn-primary" onClick={() => setStep('name')} style={{ marginTop: 8 }}>
                   Get Started <ArrowRight size={16} />
+                </button>
+              )}
+
+              {isInstallable && (
+                <button className="btn-secondary" onClick={promptInstall} style={{ marginTop: 4, background: 'rgba(124,106,255,0.15)', color: 'var(--accent)' }}>
+                  ⬇️ Install App to Home Screen
                 </button>
               )}
 
