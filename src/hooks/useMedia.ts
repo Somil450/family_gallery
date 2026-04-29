@@ -128,10 +128,18 @@ export function useRecentMedia(familyId: string | null, count = 12) {
       return;
     }
 
-    const unsub = subscribeToRecentMedia(familyId, (data) => {
-      setItems(data);
-      setLoading(false);
-    }, count);
+    const unsub = subscribeToRecentMedia(
+      familyId,
+      (data) => {
+        setItems(data);
+        setLoading(false);
+      },
+      count,
+      (err) => {
+        console.error('Recent media fetch error:', err);
+        setLoading(false);
+      }
+    );
     return unsub;
   }, [familyId, count]);
 

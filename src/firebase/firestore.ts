@@ -139,41 +139,42 @@ export async function getMediaPage(
   familyId: string,
   cursor?: QueryDocumentSnapshot
 ): Promise<{ items: MediaDoc[]; lastDoc: QueryDocumentSnapshot | null }> {
-  let q = query(
-    collection(db, 'media'),
-    where('familyId', '==', familyId),
-    where('isDuplicate', '==', false),
-    orderBy('takenAt', 'desc'),
-    limit(PAGE_SIZE)
-  );
+  // Bypassing composite index requirement by filtering and sorting client-side.
+  // Note: We ignore pagination here to make it work without indexes.
+  if (cursor) return { items: [], lastDoc: null };
 
-  if (cursor) {
-    q = query(q, startAfter(cursor));
-  }
+  const q = query(
+    collection(db, 'media'),
+    where('familyId', '==', familyId)
+  );
 
   const snaps = await getDocs(q);
-  const items = snaps.docs.map(
-    (d) => ({ id: d.id, ...d.data() } as MediaDoc)
-  );
-  const lastDoc = snaps.docs.length === PAGE_SIZE ? snaps.docs[snaps.docs.length - 1] : null;
-  return { items, lastDoc };
+  const allDocs = snaps.docs.map((d) => ({ id: d.id, ...d.data() } as MediaDoc));
+  const filtered = allDocs.filter(d => !d.isDuplicate);
+  filtered.sort((a, b) => b.takenAt.toMillis() - a.takenAt.toMillis());
+  
+  return { items: filtered, lastDoc: null };
 }
 
 export function subscribeToRecentMedia(
   familyId: string,
   cb: (items: MediaDoc[]) => void,
-  count = 12
+  count = 12,
+  onError?: (error: Error) => void
 ) {
+  // To avoid requiring a composite index which the user cannot deploy,
+  // we fetch raw documents for the family and filter/sort on the client.
   const q = query(
     collection(db, 'media'),
     where('familyId', '==', familyId),
-    where('isDuplicate', '==', false),
-    orderBy('takenAt', 'desc'),
-    limit(count)
+    limit(50) // Fetch a bit more to account for duplicates we might filter out
   );
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as MediaDoc)));
-  });
+    const allDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as MediaDoc));
+    const filtered = allDocs.filter(d => !d.isDuplicate);
+    filtered.sort((a, b) => b.takenAt.toMillis() - a.takenAt.toMillis());
+    cb(filtered.slice(0, count));
+  }, onError);
 }
 
 export async function addMediaDoc(mediaData: Omit<MediaDoc, 'id'>): Promise<string> {

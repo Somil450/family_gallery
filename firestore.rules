@@ -43,7 +43,8 @@ service cloud.firestore {
     // ─── Families ──────────────────────────────────────────────────────────────
 
     match /families/{familyId} {
-      allow read:   if isFamilyMember(familyId);
+      // Allow any authenticated user to read family metadata so they can query by inviteCode
+      allow read: if isAuthed();
 
       // Anyone authenticated can create a family (they become admin via Cloud Function / client)
       allow create: if isAuthed()
@@ -53,9 +54,13 @@ service cloud.firestore {
 
       // Only admin can update invite code, name, limits
       allow update: if isFamilyAdmin(familyId)
-                    // Members can add themselves when joining (memberUids only)
-                    || (isFamilyMember(familyId)
-                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']));
+                    // Users can add themselves when joining (memberUids only)
+                    || (
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']) &&
+                         request.resource.data.memberUids.hasAll(resource.data.memberUids) &&
+                         request.auth.uid in request.resource.data.memberUids &&
+                         request.resource.data.memberUids.size() == resource.data.memberUids.size() + 1
+                       );
 
       allow delete: if isFamilyAdmin(familyId);
     }
