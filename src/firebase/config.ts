@@ -5,7 +5,7 @@ import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCSBcUxynTbwjarSvFk3_Rz2spYPGNVfz4",
+  apiKey: "AIzaSyCSBcUXynTbwjarSvFk3_Rz2spYPGNVfz4",
   authDomain: "famvault-dd2a1.firebaseapp.com",
   projectId: "famvault-dd2a1",
   storageBucket: "famvault-dd2a1.firebasestorage.app",
