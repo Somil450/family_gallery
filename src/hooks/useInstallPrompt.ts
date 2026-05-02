@@ -16,17 +16,21 @@ export function useInstallPrompt() {
 
   useEffect(() => {
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    if (isStandalone) {
+      console.log('[FamVault] App is running in standalone mode (installed).');
       setIsInstalled(true);
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault(); // Prevent Chrome 67+ from automatically showing the prompt
+      console.log('[FamVault] beforeinstallprompt fired! The app is now installable.');
+      e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
     };
 
     const handleAppInstalled = () => {
+      console.log('[FamVault] appinstalled fired! Installation successful.');
       setIsInstallable(false);
       setIsInstalled(true);
       setDeferredPrompt(null);
@@ -42,9 +46,14 @@ export function useInstallPrompt() {
   }, []);
 
   const promptInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      console.warn('[FamVault] No deferredPrompt available to trigger.');
+      return;
+    }
+    console.log('[FamVault] Triggering native install prompt...');
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    console.log(`[FamVault] User response to install prompt: ${outcome}`);
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
       setIsInstallable(false);

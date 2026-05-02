@@ -44,11 +44,16 @@ export default function OnboardingScreen() {
     } else if (isInstalled) {
       toast.success('App is already installed!');
     } else {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-      if (isIOS) {
-        toast('To install: Tap the "Share" button and then "Add to Home Screen" 📲', { duration: 5000 });
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+      const isInApp = /FBAN|FBAV|Instagram|LinkedIn|Messenger|Twitter|WhatsApp/.test(ua);
+
+      if (isInApp) {
+        toast('⚠️ You are in an In-App Browser. Please "Open in Chrome" or "Open in Safari" to install.', { duration: 6000 });
+      } else if (isIOS) {
+        toast('To install: Tap the "Share" button at the bottom and then "Add to Home Screen" 📲', { duration: 6000 });
       } else {
-        toast('To install: Open browser menu (⋮) and select "Install" or "Add to Home screen"', { duration: 5000 });
+        toast('To install: Open the browser menu (⋮) and select "Install App" or "Add to Home screen"', { duration: 6000 });
       }
     }
   };
