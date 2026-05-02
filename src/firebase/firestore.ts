@@ -112,17 +112,19 @@ export async function leaveFamily(uid: string, familyId: string): Promise<void> 
 
   await runTransaction(db, async (transaction) => {
     const fSnap = await transaction.get(familyRef);
-    if (!fSnap.exists()) throw new Error('Family not found');
     
-    const fData = fSnap.data() as FamilyDoc;
-    if (fData.adminUid === uid) {
-      throw new Error('Admins cannot leave the vault');
+    // If family exists, remove user from it
+    if (fSnap.exists()) {
+      const fData = fSnap.data() as FamilyDoc;
+      if (fData.adminUid === uid) {
+        throw new Error('Admins cannot leave the vault');
+      }
+      transaction.update(familyRef, {
+        memberUids: arrayRemove(uid),
+      });
     }
 
-    transaction.update(familyRef, {
-      memberUids: arrayRemove(uid),
-    });
-
+    // Always reset the user doc
     transaction.update(userRef, {
       familyId: null,
       role: null,

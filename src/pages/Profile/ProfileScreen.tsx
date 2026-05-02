@@ -85,22 +85,25 @@ export default function ProfileScreen() {
   };
 
   const handleLeaveFamily = async () => {
-    if (!family || !userDoc) return;
+    if (!userDoc) return;
     
-    if (isAdmin) {
+    if (isAdmin && family) {
       if (!window.confirm(`⚠️ You are the Admin. If you leave, the vault "${family.name}" will be DELETED for everyone. Proceed?`)) return;
       handleDisbandFamily();
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to leave the "${family.name}" vault?`)) return;
+    const vaultName = family?.name || 'this vault';
+    if (!window.confirm(`Are you sure you want to leave ${vaultName}?`)) return;
 
     try {
       if (!isFirebaseConfigured) {
         toast('Local mode leave not implemented yet. Use Sign Out.');
       } else {
-        await leaveFamily(userDoc.uid, family.id);
-        toast.success('You have left the vault.');
+        // Use userDoc.familyId directly in case family object is null
+        const fid = family?.id || userDoc.familyId;
+        if (fid) await leaveFamily(userDoc.uid, fid);
+        toast.success('Vault cleared.');
       }
     } catch (e: any) {
       toast.error(e.message);
@@ -303,6 +306,15 @@ export default function ProfileScreen() {
             }}
           />
         )}
+        {!family && userDoc?.familyId && (
+          <SettingRow 
+            icon={<RefreshCw size={18} color="var(--danger)" />} 
+            label="Reset Ghost Vault (Clear Data)" 
+            onClick={handleLeaveFamily} 
+            danger 
+          />
+        )}
+
         {isAdmin && family && (
           <SettingRow 
             icon={<LogOut size={18} color="var(--danger)" />} 
