@@ -28,13 +28,6 @@ function AppInner() {
   const { userDoc, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('home');
 
-  // Register service worker for Web Share Target
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-  }, []);
-
   // Handle files shared from other apps
   const { sharedFiles, shareActive, dismissShare } = useShareTarget(() => setActiveTab('gallery'));
 

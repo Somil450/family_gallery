@@ -29,6 +29,7 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         id: '/',
+        categories: ['photo', 'productivity', 'social'],
         icons: [
           {
             src: '/icon-192.png',
@@ -41,6 +42,15 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
+          }
+        ],
+        screenshots: [
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'FamVault Home Screen'
           }
         ],
         share_target: {
