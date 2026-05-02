@@ -36,7 +36,22 @@ export default function OnboardingScreen() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { isInstallable, promptInstall } = useInstallPrompt();
+  const { isInstallable, isInstalled, promptInstall } = useInstallPrompt();
+
+  const handleInstallClick = () => {
+    if (isInstallable) {
+      promptInstall();
+    } else if (isInstalled) {
+      toast.success('App is already installed!');
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        toast('To install: Tap the "Share" button and then "Add to Home Screen" 📲', { duration: 5000 });
+      } else {
+        toast('To install: Open browser menu (⋮) and select "Install" or "Add to Home screen"', { duration: 5000 });
+      }
+    }
+  };
 
   // Check URL for auto-join code (?join=XXXXXX)
   useEffect(() => {
@@ -269,11 +284,15 @@ export default function OnboardingScreen() {
                 </button>
               )}
 
-              {isInstallable && (
-                <button className="btn-secondary" onClick={promptInstall} style={{ marginTop: 4, background: 'rgba(124,106,255,0.15)', color: 'var(--accent)' }}>
-                  ⬇️ Install App to Home Screen
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                <button 
+                  className="btn-secondary" 
+                  onClick={handleInstallClick} 
+                  style={{ background: isInstalled ? 'rgba(34,197,94,0.1)' : 'rgba(124,106,255,0.15)', color: isInstalled ? 'var(--success)' : 'var(--accent)', borderColor: isInstalled ? 'var(--success)' : 'transparent' }}
+                >
+                  {isInstalled ? '✅ App Already Installed' : '⬇️ Install App to Home Screen'}
                 </button>
-              )}
+              </div>
 
               <p style={{ color: 'var(--text-muted)', fontSize: 11, textAlign: 'center', marginTop: 'auto', paddingTop: 12 }}>
                 No account needed · Works offline · Private &amp; encrypted
