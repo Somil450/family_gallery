@@ -17,6 +17,7 @@ import {
   increment,
   arrayUnion,
   arrayRemove,
+  runTransaction,
   DocumentSnapshot,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
@@ -79,21 +80,27 @@ export async function joinFamilyByCode(
   if (snaps.empty) throw new Error('Invalid invite code');
 
   const familySnap = snaps.docs[0];
-  const family = familySnap.data() as FamilyDoc;
-
-  if (new Date() > family.inviteCodeExpiry.toDate()) {
-    throw new Error('Invite code has expired');
-  }
-
   const familyId = familySnap.id;
+  const userRef = doc(db, 'users', uid);
+  const familyRef = doc(db, 'families', familyId);
 
-  await updateDoc(doc(db, 'families', familyId), {
-    memberUids: arrayUnion(uid),
-  });
+  await runTransaction(db, async (transaction) => {
+    const fSnap = await transaction.get(familyRef);
+    if (!fSnap.exists()) throw new Error('Family not found');
+    
+    const fData = fSnap.data() as FamilyDoc;
+    if (new Date() > fData.inviteCodeExpiry.toDate()) {
+      throw new Error('Invite code has expired');
+    }
 
-  await updateDoc(doc(db, 'users', uid), {
-    familyId,
-    role: 'member',
+    transaction.update(familyRef, {
+      memberUids: arrayUnion(uid),
+    });
+
+    transaction.update(userRef, {
+      familyId,
+      role: 'member',
+    });
   });
 
   return familyId;

@@ -48,10 +48,15 @@ export default function OnboardingScreen() {
     }
   }, []);
 
-  // Firebase mode: if user is logged in but has no family, skip to family choice
+  // Firebase mode: if user is logged in but has no family, advance step
   useEffect(() => {
     if (isFirebaseConfigured && firebaseUser) {
-      setStep('family-choice');
+      // If we have an invite code from URL, go straight to join screen
+      if (code.length === 6) {
+        setStep('join');
+      } else if (step === 'welcome' || step === 'name') {
+        setStep('family-choice');
+      }
     }
   }, [firebaseUser]);
 
