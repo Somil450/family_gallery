@@ -30,6 +30,7 @@ export const functions = getFunctions(app, 'us-central1');
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('profile');
 googleProvider.addScope('email');
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const phoneProvider = new PhoneAuthProvider(auth);
 
