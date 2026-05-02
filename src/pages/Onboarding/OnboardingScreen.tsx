@@ -15,7 +15,7 @@ import {
 } from '../../lib/localStore';
 
 // Firebase imports (only used when configured)
-import { signInWithGoogle } from '../../firebase/auth';
+import { signInWithGoogle, signInGuest } from '../../firebase/auth';
 import { createFamily, joinFamilyByCode } from '../../firebase/firestore';
 
 import { useInstallPrompt } from '../../hooks/useInstallPrompt';
@@ -57,12 +57,25 @@ export default function OnboardingScreen() {
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
-  const handleNameContinue = () => {
+  const handleNameContinue = async () => {
     if (!name.trim() || name.trim().length < 2) {
       toast.error('Enter your name (at least 2 characters)');
       return;
     }
-    setStep('family-choice');
+    
+    if (isFirebase && !firebaseUser) {
+      try {
+        setLoading(true);
+        await signInGuest(name.trim());
+        // Step will automatically advance via useEffect
+      } catch (e: any) {
+        toast.error(e.message);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setStep('family-choice');
+    }
   };
 
   const handleLocalCreate = () => {
@@ -110,7 +123,8 @@ export default function OnboardingScreen() {
   };
 
   const handleFirebaseCreate = async () => {
-    if (!firebaseUser || !familyName.trim()) return;
+    if (!familyName.trim()) { toast.error('Enter a family name'); return; }
+    if (!firebaseUser) { toast.error('Please sign in to create a vault'); return; }
     try {
       setLoading(true);
       await createFamily(firebaseUser.uid, familyName.trim());
@@ -123,7 +137,8 @@ export default function OnboardingScreen() {
   };
 
   const handleFirebaseJoin = async () => {
-    if (!firebaseUser || code.length !== 6) return;
+    if (code.length !== 6) { toast.error('Enter a 6-character invite code'); return; }
+    if (!firebaseUser) { toast.error('Please sign in to join a vault'); return; }
     try {
       setLoading(true);
       await joinFamilyByCode(firebaseUser.uid, code.trim());

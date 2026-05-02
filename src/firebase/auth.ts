@@ -1,6 +1,8 @@
 import {
   signInWithPopup,
   signInWithPhoneNumber,
+  signInAnonymously,
+  updateProfile,
   signOut,
   onAuthStateChanged,
   User,
@@ -14,6 +16,13 @@ import { auth, googleProvider, db } from './config';
 
 export async function signInWithGoogle(): Promise<User> {
   const result = await signInWithPopup(auth, googleProvider);
+  await upsertUserDoc(result.user);
+  return result.user;
+}
+
+export async function signInGuest(name: string): Promise<User> {
+  const result = await signInAnonymously(auth);
+  await updateProfile(result.user, { displayName: name });
   await upsertUserDoc(result.user);
   return result.user;
 }
