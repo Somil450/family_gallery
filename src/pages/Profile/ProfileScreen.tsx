@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Moon, Sun, Shield, Users, HardDrive, Crown, RefreshCw } from 'lucide-react';
+import { LogOut, Moon, Sun, Shield, Users, HardDrive, Crown, RefreshCw, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useInstallPrompt } from '../../hooks/useInstallPrompt';
 import { logOut } from '../../firebase/auth';
 import { isFirebaseConfigured } from '../../firebase/config';
 import {
@@ -22,6 +23,8 @@ export default function ProfileScreen() {
   const [members, setMembers] = useState<(UserDoc | LocalUser)[]>([]);
   const [regenLoading, setRegenLoading] = useState(false);
   const [localCode, setLocalCode] = useState<string | null>(null);
+
+  const { isInstallable, promptInstall } = useInstallPrompt();
 
   useEffect(() => {
     if (!family) return;
@@ -266,6 +269,14 @@ export default function ProfileScreen() {
           onClick={toggleTheme}
         />
         <SettingRow icon={<Shield size={18} />} label="Privacy & Security" onClick={() => toast('Coming soon!')} />
+        {isInstallable && (
+          <SettingRow 
+            icon={<Sparkles size={18} color="var(--accent)" />} 
+            label="Install FamVault App" 
+            onClick={promptInstall} 
+            style={{ background: 'rgba(124,106,255,0.1)', borderColor: 'var(--accent)' }}
+          />
+        )}
         {isAdmin && family && (
           <SettingRow 
             icon={<LogOut size={18} color="var(--danger)" />} 
@@ -290,7 +301,7 @@ export default function ProfileScreen() {
   );
 }
 
-function SettingRow({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+function SettingRow({ icon, label, onClick, danger, style }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean; style?: React.CSSProperties }) {
   return (
     <button
       onClick={onClick}
@@ -302,6 +313,7 @@ function SettingRow({ icon, label, onClick, danger }: { icon: React.ReactNode; l
         color: danger ? 'var(--danger)' : 'var(--text-primary)',
         transition: 'background 0.2s',
         marginBottom: 8,
+        ...style,
       }}
     >
       {icon}
