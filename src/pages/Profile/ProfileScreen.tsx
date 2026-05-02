@@ -64,6 +64,20 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleInstallClick = () => {
+    if (isInstallable) {
+      promptInstall();
+    } else {
+      // Fallback for iOS or unsupported browsers
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        toast('To install: Tap the "Share" button and then "Add to Home Screen" 📲', { duration: 5000 });
+      } else {
+        toast('To install: Open browser menu (⋮) and select "Install" or "Add to Home screen"', { duration: 5000 });
+      }
+    }
+  };
+
   const handleLeaveFamily = async () => {
     if (!family || !userDoc) return;
     if (isAdmin) {
@@ -269,12 +283,16 @@ export default function ProfileScreen() {
           onClick={toggleTheme}
         />
         <SettingRow icon={<Shield size={18} />} label="Privacy & Security" onClick={() => toast('Coming soon!')} />
-        {isInstallable && (
+        {family && (
           <SettingRow 
             icon={<Sparkles size={18} color="var(--accent)" />} 
-            label="Install FamVault App" 
-            onClick={promptInstall} 
-            style={{ background: 'rgba(124,106,255,0.1)', borderColor: 'var(--accent)' }}
+            label={isInstalled ? "App Installed" : "Install FamVault App"} 
+            onClick={isInstalled ? () => toast.success('App is already installed!') : handleInstallClick} 
+            style={{ 
+              background: isInstalled ? 'rgba(34,197,94,0.1)' : 'rgba(124,106,255,0.1)', 
+              borderColor: isInstalled ? 'var(--success)' : 'var(--accent)',
+              opacity: isInstalled ? 0.7 : 1
+            }}
           />
         )}
         {isAdmin && family && (
