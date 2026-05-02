@@ -65,6 +65,7 @@ interface AuthContextValue {
   loading: boolean;
   /** true = using localStorage backend (no Firebase credentials) */
   isLocalMode: boolean;
+  members: (UserDoc | LocalUser)[];
   /** Call this to force a re-read of localStorage after mutations */
   refreshLocal: () => void;
 }
@@ -73,6 +74,7 @@ const AuthContext = createContext<AuthContextValue>({
   firebaseUser: null,
   userDoc: null,
   family: null,
+  members: [],
   loading: true,
   isLocalMode: false,
   refreshLocal: () => {},
@@ -101,12 +103,14 @@ function LocalProvider({ children }: { children: ReactNode }) {
   const userDoc = rawUser ? toUserDoc(rawUser) : null;
   const rawFamily = rawUser?.familyId ? localGetFamily(rawUser.familyId) : null;
   const family = rawFamily ? toFamilyDoc(rawFamily) : null;
+  const members = family ? localGetFamilyMembers(family.memberUids) : [];
 
   return (
     <AuthContext.Provider value={{
       firebaseUser: null,
       userDoc,
       family,
+      members,
       loading: false,
       isLocalMode: true,
       refreshLocal,
@@ -122,6 +126,7 @@ function FirebaseProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [family, setFamily] = useState<FamilyDoc | null>(null);
+  const [members, setMembers] = useState<UserDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -144,11 +149,17 @@ function FirebaseProvider({ children }: { children: ReactNode }) {
     return subscribeToFamily(userDoc.familyId, setFamily);
   }, [userDoc?.familyId]);
 
+  useEffect(() => {
+    if (!family?.id) { setMembers([]); return; }
+    getFamilyMembers(family.id).then(setMembers);
+  }, [family?.id, family?.memberUids.length]);
+
   return (
     <AuthContext.Provider value={{
       firebaseUser,
       userDoc,
       family,
+      members,
       loading,
       isLocalMode: false,
       refreshLocal: () => {},

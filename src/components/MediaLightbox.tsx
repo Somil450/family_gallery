@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function MediaLightbox({ item: initial, allItems, onClose, onDeleted }: Props) {
-  const { userDoc, refreshLocal } = useAuth();
+  const { userDoc, members, refreshLocal } = useAuth();
   const [item, setItem] = useState(initial);
   const [showControls, setShowControls] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -226,6 +226,9 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
                   {dateStr && <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{dateStr}</p>}
                   <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
                     {(item.sizeBytes / 1024 / 1024).toFixed(1)} MB{item.width ? ` · ${item.width}×${item.height}` : ''}
+                  </p>
+                  <p style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600, marginTop: 4 }}>
+                    Uploaded by {members.find(m => m.uid === item.uploaderUid)?.displayName ?? 'Unknown'}
                   </p>
                   {item.aiLabels.length > 0 && (
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>

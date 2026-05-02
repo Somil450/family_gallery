@@ -30,8 +30,8 @@ service cloud.firestore {
     // ─── Users ─────────────────────────────────────────────────────────────────
 
     match /users/{userId} {
-      // Only the user themselves can read/write their own doc
-      allow read:   if isUser(userId);
+      // Users can read their own doc, or docs of people in their same family
+      allow read:   if isUser(userId) || (isAuthed() && isFamilyMember(resource.data.familyId));
       allow create: if isUser(userId);
       allow update: if isUser(userId) 
                     && (request.resource.data.role in ['member', 'admin'] || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))

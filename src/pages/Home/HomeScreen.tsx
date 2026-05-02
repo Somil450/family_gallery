@@ -15,19 +15,11 @@ interface Props {
 }
 
 export default function HomeScreen({ onTabChange }: Props) {
-  const { userDoc, family } = useAuth();
+  const { userDoc, family, members } = useAuth();
   const { items: recentMedia, loading } = useRecentMedia(userDoc?.familyId ?? null, 12);
-  const [members, setMembers] = useState<(UserDoc | LocalUser)[]>([]);
   const [lightboxItem, setLightboxItem] = useState<MediaDoc | null>(null);
 
-  useEffect(() => {
-    if (!family) return;
-    if (!isFirebaseConfigured) {
-      setMembers(localGetFamilyMembers(family.memberUids));
-    } else {
-      getFamilyMembers(family.id).then(setMembers);
-    }
-  }, [family?.memberUids.length]);
+
 
   const storagePercent = family
     ? Math.min(100, (family.storageUsedBytes / family.storageLimitBytes) * 100)
@@ -193,6 +185,11 @@ export default function HomeScreen({ onTabChange }: Props) {
                   </span>
                 </div>
               )}
+              <div style={{ position: 'absolute', top: 6, right: 6 }}>
+                <span className="badge" style={{ background: 'rgba(124,106,255,0.7)', color: '#fff', backdropFilter: 'blur(4px)', fontSize: 8, padding: '2px 6px' }}>
+                  {members.find(m => m.uid === item.uploaderUid)?.displayName.split(' ')[0] ?? 'User'}
+                </span>
+              </div>
             </motion.div>
           ))}
         </div>
