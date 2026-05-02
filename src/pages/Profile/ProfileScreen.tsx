@@ -86,8 +86,10 @@ export default function ProfileScreen() {
 
   const handleLeaveFamily = async () => {
     if (!family || !userDoc) return;
+    
     if (isAdmin) {
-      toast.error('Admins cannot leave the vault. You must nominate a new admin first.');
+      if (!window.confirm(`⚠️ You are the Admin. If you leave, the vault "${family.name}" will be DELETED for everyone. Proceed?`)) return;
+      handleDisbandFamily();
       return;
     }
 
@@ -95,7 +97,6 @@ export default function ProfileScreen() {
 
     try {
       if (!isFirebaseConfigured) {
-        // Local mode leave
         toast('Local mode leave not implemented yet. Use Sign Out.');
       } else {
         await leaveFamily(userDoc.uid, family.id);
