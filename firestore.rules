@@ -13,10 +13,6 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == uid;
     }
 
-    function getUserData(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data;
-    }
-
     function isFamilyMember(familyId) {
       return isAuthed() &&
              request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.memberUids;
@@ -34,7 +30,7 @@ service cloud.firestore {
       allow read:   if isUser(userId) || (isAuthed() && isFamilyMember(resource.data.familyId));
       allow create: if isUser(userId);
       allow update: if isUser(userId) 
-                    && (request.resource.data.role in ['member', 'admin'] || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+                    && (request.resource.data.role in ['member', 'admin', null] || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
                     || isFamilyAdmin(resource.data.familyId);
       allow delete: if false; // Soft-delete only
     }
@@ -53,11 +49,15 @@ service cloud.firestore {
 
       // Only admin can update invite code, name, limits
       allow update: if isFamilyAdmin(familyId)
-                    // Users can add themselves when joining (memberUids only)
+                    // Users can add OR remove THEMSELVES when joining/leaving
                     || (
                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']) &&
-                         request.resource.data.memberUids.hasAll(resource.data.memberUids) &&
-                         request.auth.uid in request.resource.data.memberUids
+                         (
+                           // Joining: Add self
+                           (request.resource.data.memberUids.hasAll(resource.data.memberUids) && request.auth.uid in request.resource.data.memberUids) ||
+                           // Leaving: Remove self
+                           (resource.data.memberUids.hasAll(request.resource.data.memberUids) && !(request.auth.uid in request.resource.data.memberUids))
+                         )
                        );
 
       allow delete: if isFamilyAdmin(familyId);

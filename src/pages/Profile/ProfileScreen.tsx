@@ -12,7 +12,7 @@ import {
   localSignOut,
   type LocalUser,
 } from '../../lib/localStore';
-import { getFamilyMembers, regenerateInviteCode } from '../../firebase/firestore';
+import { getFamilyMembers, regenerateInviteCode, leaveFamily } from '../../firebase/firestore';
 import type { UserDoc } from '../../types';
 import { InviteCodeDisplay } from '../Onboarding/OnboardingScreen';
 
@@ -58,6 +58,28 @@ export default function ProfileScreen() {
       refreshLocal();
     } else {
       await logOut();
+    }
+  };
+
+  const handleLeaveFamily = async () => {
+    if (!family || !userDoc) return;
+    if (isAdmin) {
+      toast.error('Admins cannot leave the vault. You must nominate a new admin first.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to leave the "${family.name}" vault?`)) return;
+
+    try {
+      if (!isFirebaseConfigured) {
+        // Local mode leave
+        toast('Local mode leave not implemented yet. Use Sign Out.');
+      } else {
+        await leaveFamily(userDoc.uid, family.id);
+        toast.success('You have left the vault.');
+      }
+    } catch (e: any) {
+      toast.error(e.message);
     }
   };
 
@@ -226,6 +248,14 @@ export default function ProfileScreen() {
           onClick={toggleTheme}
         />
         <SettingRow icon={<Shield size={18} />} label="Privacy & Security" onClick={() => toast('Coming soon!')} />
+        {!isAdmin && family && (
+          <SettingRow 
+            icon={<LogOut size={18} color="var(--danger)" />} 
+            label={`Leave "${family.name}" Vault`} 
+            onClick={handleLeaveFamily} 
+            danger 
+          />
+        )}
         <SettingRow icon={<LogOut size={18} color="var(--danger)" />} label="Sign Out" onClick={handleSignOut} danger />
       </motion.div>
 

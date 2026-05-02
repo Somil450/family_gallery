@@ -319,49 +319,63 @@ export default function OnboardingScreen() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Create a vault for your family or join an existing one.</p>
               </div>
 
-              <button
-                onClick={() => setStep('create')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  background: 'var(--bg-glass)', border: '2px solid var(--border)',
-                  borderRadius: 'var(--radius-md)', padding: '18px 20px', cursor: 'pointer',
-                  textAlign: 'left', transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-              >
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--grad-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Home size={20} color="#fff" />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>Create a Family Vault</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2 }}>Start fresh — invite family members later</div>
-                </div>
-                <ArrowRight size={16} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />
-              </button>
-
-              <button
-                onClick={() => setStep('join')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  background: 'var(--bg-glass)', border: '2px solid var(--border)',
-                  borderRadius: 'var(--radius-md)', padding: '18px 20px', cursor: 'pointer',
-                  textAlign: 'left', transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-              >
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <LogIn size={20} color="#fff" />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>Join with Invite Code</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2 }}>
-                    {code ? `Using code: ${code}` : 'Enter the 6-character code from your family'}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <button
+                  onClick={() => setStep('create')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 16,
+                    background: 'var(--bg-glass)', border: '2px solid var(--border)',
+                    borderRadius: 'var(--radius-md)', padding: '18px 20px', cursor: 'pointer',
+                    textAlign: 'left', transition: 'border-color 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--grad-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Home size={20} color="#fff" />
                   </div>
-                </div>
-                <ArrowRight size={16} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />
-              </button>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>Create a Family Vault</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2 }}>Start fresh — invite family members later</div>
+                  </div>
+                  <ArrowRight size={16} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />
+                </button>
+
+                <button
+                  onClick={() => setStep('join')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 16,
+                    background: 'var(--bg-glass)', border: '2px solid var(--border)',
+                    borderRadius: 'var(--radius-md)', padding: '18px 20px', cursor: 'pointer',
+                    textAlign: 'left', transition: 'border-color 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <LogIn size={20} color="#fff" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>Join with Invite Code</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2 }}>
+                      {code ? `Using code: ${code}` : 'Enter the 6-character code from your family'}
+                    </div>
+                  </div>
+                  <ArrowRight size={16} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />
+                </button>
+              </div>
+
+              {isFirebase && firebaseUser && (
+                <button 
+                  onClick={() => {
+                    import('../../firebase/auth').then(m => m.logOut());
+                    setStep('welcome');
+                  }}
+                  style={{ marginTop: 12, color: 'var(--text-muted)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Sign out of {firebaseUser.displayName || 'this account'}
+                </button>
+              )}
             </motion.div>
           )}
 

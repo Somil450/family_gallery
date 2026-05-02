@@ -20,9 +20,11 @@ import type { UserDoc, FamilyDoc } from '../types';
 import {
   localGetCurrentUser,
   localGetFamily,
+  localGetFamilyMembers,
   type LocalUser,
   type LocalFamily,
 } from '../lib/localStore';
+import { getFamilyMembers } from '../firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 
 // ─── Convert local types to shared types ─────────────────────────────────────

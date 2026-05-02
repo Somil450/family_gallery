@@ -106,6 +106,30 @@ export async function joinFamilyByCode(
   return familyId;
 }
 
+export async function leaveFamily(uid: string, familyId: string): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  const familyRef = doc(db, 'families', familyId);
+
+  await runTransaction(db, async (transaction) => {
+    const fSnap = await transaction.get(familyRef);
+    if (!fSnap.exists()) throw new Error('Family not found');
+    
+    const fData = fSnap.data() as FamilyDoc;
+    if (fData.adminUid === uid) {
+      throw new Error('Admins cannot leave the vault');
+    }
+
+    transaction.update(familyRef, {
+      memberUids: arrayRemove(uid),
+    });
+
+    transaction.update(userRef, {
+      familyId: null,
+      role: null,
+    });
+  });
+}
+
 export async function getFamilyDoc(familyId: string): Promise<FamilyDoc | null> {
   const snap = await getDoc(doc(db, 'families', familyId));
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as FamilyDoc) : null;
