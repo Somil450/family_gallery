@@ -62,7 +62,8 @@ service cloud.firestore {
                          )
                        );
 
-      allow delete: if isFamilyAdmin(familyId);
+      allow delete: if isFamilyAdmin(familyId)
+                    || (isFamilyMember(familyId) && (resource.data.adminUid == null || resource.data.adminUid == ""));
     }
 
     // ─── Media ─────────────────────────────────────────────────────────────────

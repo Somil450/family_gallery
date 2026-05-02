@@ -109,7 +109,7 @@ export default function ProfileScreen() {
 
   const handleDisbandFamily = async () => {
     if (!family || !userDoc) return;
-    if (!isAdmin) return;
+    if (!isAdmin && family.adminUid) return;
 
     if (!window.confirm(`⚠️ WARNING: Are you sure you want to DISBAND "${family.name}"? This will delete the vault for everyone and you will have to create a new one.`)) return;
 
@@ -311,12 +311,22 @@ export default function ProfileScreen() {
           />
         )}
         {!isAdmin && family && (
-          <SettingRow 
-            icon={<LogOut size={18} color="var(--danger)" />} 
-            label={`Leave "${family.name}" Vault`} 
-            onClick={handleLeaveFamily} 
-            danger 
-          />
+          <>
+            {(!family.adminUid) && (
+              <SettingRow 
+                icon={<LogOut size={18} color="var(--danger)" />} 
+                label={`Disband Ownerless Vault (Delete)`} 
+                onClick={handleDisbandFamily} 
+                danger 
+              />
+            )}
+            <SettingRow 
+              icon={<LogOut size={18} color="var(--danger)" />} 
+              label={`Leave "${family.name}" Vault`} 
+              onClick={handleLeaveFamily} 
+              danger 
+            />
+          </>
         )}
         <SettingRow icon={<LogOut size={18} color="var(--danger)" />} label="Sign Out" onClick={handleSignOut} danger />
       </motion.div>
