@@ -34,7 +34,7 @@ service cloud.firestore {
       allow read:   if isUser(userId);
       allow create: if isUser(userId);
       allow update: if isUser(userId) 
-                    && (request.resource.data.role == 'member' || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+                    && (request.resource.data.role in ['member', 'admin'] || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
                     || isFamilyAdmin(resource.data.familyId);
       allow delete: if false; // Soft-delete only
     }
