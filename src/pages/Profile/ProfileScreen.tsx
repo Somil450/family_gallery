@@ -24,7 +24,7 @@ export default function ProfileScreen() {
   const [regenLoading, setRegenLoading] = useState(false);
   const [localCode, setLocalCode] = useState<string | null>(null);
 
-  const { isInstallable, promptInstall } = useInstallPrompt();
+  const { isInstallable, isInstalled, promptInstall } = useInstallPrompt();
 
   useEffect(() => {
     if (!family) return;
