@@ -109,7 +109,7 @@ export default function ProfileScreen() {
 
   const handleDisbandFamily = async () => {
     if (!family || !userDoc) return;
-    if (!isAdmin && family.adminUid) return;
+    if (!isAdmin && !isOwnerless) return;
 
     if (!window.confirm(`⚠️ WARNING: Are you sure you want to DISBAND "${family.name}"? This will delete the vault for everyone and you will have to create a new one.`)) return;
 
@@ -126,6 +126,7 @@ export default function ProfileScreen() {
   };
 
   const isAdmin = userDoc?.role === 'admin';
+  const isOwnerless = family && (!family.adminUid || !family.memberUids.includes(family.adminUid));
   const currentCode = localCode ?? family?.inviteCode ?? '';
 
   return (
@@ -312,7 +313,7 @@ export default function ProfileScreen() {
         )}
         {!isAdmin && family && (
           <>
-            {(!family.adminUid) && (
+            {isOwnerless && (
               <SettingRow 
                 icon={<LogOut size={18} color="var(--danger)" />} 
                 label={`Disband Ownerless Vault (Delete)`} 
