@@ -13,6 +13,12 @@ precacheAndRoute(self.__WB_MANIFEST);
 self.skipWaiting();
 clientsClaim();
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // ── Share Target & Offline Fallback ───────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
