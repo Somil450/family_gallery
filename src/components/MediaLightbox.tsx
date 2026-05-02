@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { X, Share2, Download, Trash2, Info, Check } from 'lucide-react';
 import { format } from 'date-fns';
@@ -39,10 +39,6 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
     
     return () => {
       window.removeEventListener('popstate', onPop);
-      // Clean up history if closing normally
-      if (window.history.state?.lightbox) {
-        // window.history.back(); // This might cause infinite loops if not careful
-      }
     };
   }, [onClose]);
 
@@ -155,7 +151,7 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
             exit={{ opacity: 0.6, scale: 0.96 }}
             transition={{ duration: 0.15 }}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
-            onClick={() => { setShowControls(v => !v); setShowInfo(false); }}
+            onClick={(e) => { e.stopPropagation(); setShowControls(v => !v); setShowInfo(false); }}
           >
             {item.type === 'video' ? (
               <video
@@ -176,18 +172,14 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
         </AnimatePresence>
       </motion.div>
 
-      {/* ── Controls (tap to reveal) ── */}
-      <AnimatePresence>
-        {showControls && (
-          <>
       {/* ── Top Close Button (Always Visible) ── */}
       <button 
-        onClick={handleClose}
+        onClick={(e) => { e.stopPropagation(); handleClose(); }}
         style={{ 
           position: 'absolute', top: 'calc(env(safe-area-inset-top) + 14px)', left: 18, 
           width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', 
           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', 
-          justifyContent: 'center', color: '#fff', backdropFilter: 'blur(8px)', zIndex: 20 
+          justifyContent: 'center', color: '#fff', backdropFilter: 'blur(8px)', zIndex: 400 
         }}
       >
         <X size={20} />
