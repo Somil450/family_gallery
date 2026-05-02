@@ -49,13 +49,14 @@ export function useUpload(onUploadComplete?: () => void) {
     const familyId = userDoc.familyId;
 
     try {
-      updateItem(item.id, { status: 'compressing', progress: 5 });
+      updateItem(item.id, { status: 'uploading', progress: 10 });
 
       const result = await uploadMedia(item.file, familyId, firebaseUser.uid, (p) => {
-        updateItem(item.id, { status: 'uploading', progress: Math.round(5 + p.percentage * 0.7) });
+        const pct = Math.round(10 + p.percentage * 0.8);
+        updateItem(item.id, { status: 'uploading', progress: pct });
       });
 
-      updateItem(item.id, { status: 'processing', progress: 80 });
+      updateItem(item.id, { status: 'processing', progress: 95 });
 
       // Duplicate check
       let isDuplicate = false;

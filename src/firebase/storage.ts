@@ -42,6 +42,7 @@ export async function uploadMedia(
   let thumbnailFile: File | null = null;
 
   if (type === 'image') {
+    console.log('[uploadMedia] Compressing image...', file.name);
     // Compress original
     fileToUpload = await imageCompression(file, {
       maxSizeMB: MAX_IMAGE_SIZE_MB,
@@ -49,6 +50,7 @@ export async function uploadMedia(
       useWebWorker: true,
     });
 
+    console.log('[uploadMedia] Generating thumbnail...', file.name);
     // Generate thumbnail (lower res)
     thumbnailFile = await imageCompression(file, {
       maxSizeMB: 0.1,
@@ -65,8 +67,11 @@ export async function uploadMedia(
   // Compute perceptual hash for dedup (images only)
   let pHash = '';
   if (type === 'image') {
+    console.log('[uploadMedia] Computing hash...', file.name);
     pHash = await computeImageHash(fileToUpload);
   }
+
+  console.log('[uploadMedia] Starting upload to storage...', fullPath);
 
   // Upload full
   const downloadURL = await uploadWithRetry(
@@ -137,7 +142,10 @@ function uploadToStorage(
           state: snapshot.state as UploadProgress['state'],
         });
       },
-      reject,
+      (err) => {
+        console.error('[uploadToStorage] Task failed:', path, err);
+        reject(err);
+      },
       async () => {
         const url = await getDownloadURL(task.snapshot.ref);
         resolve(url);
