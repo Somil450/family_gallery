@@ -111,20 +111,40 @@ export default function ProfileScreen() {
   };
 
   const handleDisbandFamily = async () => {
-    if (!family || !userDoc) return;
-    if (!isAdmin && !isOwnerless) return;
+    console.log('[handleDisbandFamily] Start', { isAdmin, isOwnerless, fid: family?.id });
+    if (!family || !userDoc) {
+      console.warn('[handleDisbandFamily] Missing family or userDoc');
+      return;
+    }
+    if (!isAdmin && !isOwnerless) {
+      console.warn('[handleDisbandFamily] Permission denied (not admin and not ownerless)');
+      return;
+    }
 
-    if (!window.confirm(`⚠️ WARNING: Are you sure you want to DISBAND "${family.name}"? This will delete the vault for everyone and you will have to create a new one.`)) return;
+    const vaultName = family.name;
+    const msg = isAdmin 
+      ? `⚠️ WARNING: Are you sure you want to DISBAND "${vaultName}"? This will delete the vault for everyone and you will have to create a new one.`
+      : `⚠️ WARNING: This vault has no owner. Are you sure you want to delete "${vaultName}" for everyone?`;
+
+    if (!window.confirm(msg)) {
+      console.log('[handleDisbandFamily] Cancelled by user');
+      return;
+    }
 
     try {
       if (!isFirebaseConfigured) {
         toast('Local mode disband not implemented yet.');
       } else {
+        console.log('[handleDisbandFamily] Calling Firebase disbandFamily...');
         await disbandFamily(userDoc.uid, family.id);
+        console.log('[handleDisbandFamily] Success');
         toast.success('The vault has been disbanded.');
+        // Force refresh state
+        if (refreshLocal) refreshLocal();
       }
     } catch (e: any) {
-      toast.error(e.message);
+      console.error('[handleDisbandFamily] Error:', e);
+      toast.error(`Failed to disband: ${e.message}`);
     }
   };
 
