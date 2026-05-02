@@ -30,6 +30,27 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
   const idx = items.findIndex(i => i.id === item.id);
   const canDelete = userDoc?.uid === item.uploaderUid || userDoc?.role === 'admin';
 
+  // Handle browser back button to close lightbox
+  useEffect(() => {
+    window.history.pushState({ lightbox: true }, '');
+    
+    const onPop = () => onClose();
+    window.addEventListener('popstate', onPop);
+    
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // Clean up history if closing normally
+      if (window.history.state?.lightbox) {
+        // window.history.back(); // This might cause infinite loops if not careful
+      }
+    };
+  }, [onClose]);
+
+  const handleClose = () => {
+    if (window.history.state?.lightbox) window.history.back();
+    else onClose();
+  };
+
   const goTo = useCallback((newIdx: number) => {
     if (newIdx >= 0 && newIdx < items.length) {
       setItem(items[newIdx]);
@@ -46,7 +67,7 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
       else if (offset.x > 60 || velocity.x > 400) goTo(idx - 1);
     } else if (offset.y > 120 || velocity.y > 600) {
       // Swipe down → close
-      onClose();
+      handleClose();
     }
   };
 
@@ -66,7 +87,7 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
       }
       toast.success('Memory deleted');
       onDeleted?.();
-      onClose();
+      handleClose();
     } catch (err: any) {
       console.error('[Delete]', err);
       toast.error(`Delete failed: ${err?.message ?? 'unknown error'}`);
@@ -124,7 +145,7 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
         onDragEnd={handleDragEnd}
         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}
         whileDrag={{ cursor: 'grabbing' }}
-        onClick={e => e.stopPropagation()}
+        onClick={() => handleClose()}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -159,7 +180,24 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
       <AnimatePresence>
         {showControls && (
           <>
-            {/* Top bar */}
+      {/* ── Top Close Button (Always Visible) ── */}
+      <button 
+        onClick={handleClose}
+        style={{ 
+          position: 'absolute', top: 'calc(env(safe-area-inset-top) + 14px)', left: 18, 
+          width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', 
+          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', 
+          justifyContent: 'center', color: '#fff', backdropFilter: 'blur(8px)', zIndex: 20 
+        }}
+      >
+        <X size={20} />
+      </button>
+
+      {/* ── Controls (tap to reveal) ── */}
+      <AnimatePresence>
+        {showControls && (
+          <>
+            {/* Top bar (Info only) */}
             <motion.div
               initial={{ opacity: 0, y: -16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -170,18 +208,16 @@ export default function MediaLightbox({ item: initial, allItems, onClose, onDele
                 position: 'absolute', top: 0, left: 0, right: 0,
                 padding: 'calc(env(safe-area-inset-top) + 14px) 18px 32px',
                 background: 'linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, transparent 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10,
+                display: 'flex', alignItems: 'center', justifyContent: 'flex-end', zIndex: 10,
               }}
             >
-              <button onClick={onClose}
-                style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(8px)' }}>
-                <X size={20} />
-              </button>
-              {dateStr && <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600 }}>{dateStr}</span>}
-              <button onClick={e => { e.stopPropagation(); setShowInfo(v => !v); }}
-                style={{ width: 38, height: 38, borderRadius: '50%', background: showInfo ? 'rgba(124,106,255,0.4)' : 'rgba(255,255,255,0.12)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(8px)' }}>
-                <Info size={18} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {dateStr && <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600 }}>{dateStr}</span>}
+                <button onClick={e => { e.stopPropagation(); setShowInfo(v => !v); }}
+                  style={{ width: 38, height: 38, borderRadius: '50%', background: showInfo ? 'rgba(124,106,255,0.4)' : 'rgba(255,255,255,0.12)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(8px)' }}>
+                  <Info size={18} />
+                </button>
+              </div>
             </motion.div>
 
             {/* Bottom bar */}

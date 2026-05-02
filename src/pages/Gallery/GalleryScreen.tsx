@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useMediaGallery } from '../../hooks/useMedia';
 import { useSelection } from '../../hooks/useSelection';
 import { isFirebaseConfigured } from '../../firebase/config';
-import { searchMedia } from '../../firebase/firestore';
+import { searchMedia, deleteMediaDoc } from '../../firebase/firestore';
 import {
   localGetMediaMeta, localDeleteMedia, localGetAlbums, localCreateAlbum,
   localAddToAlbum, localRemoveFromAlbum, localDeleteAlbum, localRenameAlbum,
@@ -66,14 +66,19 @@ export default function GalleryScreen() {
     const metas = localGetMediaMeta(fid);
     let deleted = 0;
     for (const id of sel.selected) {
-      const m = metas.find(x => x.id === id);
-      if (m) {
-        try {
-          await localDeleteMedia(m);
-          deleted++;
-        } catch (err) {
-          console.error('[batchDelete] failed for', id, err);
+      try {
+        if (!isFirebaseConfigured) {
+          const m = metas.find(x => x.id === id);
+          if (m) await localDeleteMedia(m);
+        } else {
+          const item = items.find(i => i.id === id);
+          if (item) {
+            await deleteMediaDoc(item.id, item.familyId, item.uploaderUid, item.sizeBytes);
+          }
         }
+        deleted++;
+      } catch (err) {
+        console.error('[batchDelete] failed for', id, err);
       }
     }
     if (openAlbum) localRemoveFromAlbum(fid, openAlbum.id, Array.from(sel.selected));

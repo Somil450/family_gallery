@@ -49,6 +49,8 @@ service cloud.firestore {
 
       // Only admin can update invite code, name, limits
       allow update: if isFamilyAdmin(familyId)
+                    // Allow members to update storage usage when uploading/deleting
+                    || (isFamilyMember(familyId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['storageUsedBytes']))
                     // Users can add OR remove THEMSELVES when joining/leaving
                     || (
                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']) &&
