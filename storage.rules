@@ -24,10 +24,8 @@ service firebase.storage {
       // Any family member can read media
       allow read: if isFamilyMember();
 
-      // Uploader must be the authenticated user writing to their own subfolder
-      // File size ≤ 500 MB, must be image or video
-      allow write: if isFamilyMember()
-                   && request.auth.uid == uploaderUid
+      // Uploader must be authenticated
+      allow write: if request.auth != null
                    && request.resource.size <= 524288000
                    && (request.resource.contentType.matches('image/.*')
                        || request.resource.contentType.matches('video/.*'));

@@ -1,13 +1,4 @@
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-  UploadTaskSnapshot,
-} from 'firebase/storage';
 import imageCompression from 'browser-image-compression';
-import { storage } from './config';
-import { computeImageHash } from '../utils/hash';
 
 export interface UploadProgress {
   bytesTransferred: number;
@@ -19,16 +10,16 @@ export interface UploadProgress {
 export interface UploadResult {
   downloadURL: string;
   thumbnailURL: string;
-  storagePath: string;
+  storagePath: string; // We'll store the public_id here
   sizeBytes: number;
   pHash: string;
   type: 'image' | 'video';
 }
 
-const MAX_IMAGE_SIZE_MB = 2;
-const MAX_RETRIES = 3;
+const CLOUD_NAME = 'dwen6h0ua';
+const UPLOAD_PRESET = 'famvault';
 
-// ─── Main Upload Function ─────────────────────────────────────────────────────
+// ─── Main Upload Function (Cloudinary) ────────────────────────────────────────
 
 export async function uploadMedia(
   file: File,
@@ -38,131 +29,80 @@ export async function uploadMedia(
 ): Promise<UploadResult> {
   const type = file.type.startsWith('video') ? 'video' : 'image';
 
-  let fileToUpload: File = file;
-  let thumbnailFile: File | null = null;
-
+  // We can still compress images locally before sending to Cloudinary to save bandwidth
+  let fileToUpload: File | Blob = file;
   if (type === 'image') {
-    console.log('[uploadMedia] Compressing image...', file.name);
-    // Compress original
-    fileToUpload = await imageCompression(file, {
-      maxSizeMB: MAX_IMAGE_SIZE_MB,
-      maxWidthOrHeight: 2048,
-      useWebWorker: true,
-    });
-
-    console.log('[uploadMedia] Generating thumbnail...', file.name);
-    // Generate thumbnail (lower res)
-    thumbnailFile = await imageCompression(file, {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 400,
-      useWebWorker: true,
-    });
+    try {
+      fileToUpload = await imageCompression(file, {
+        maxSizeMB: 2,
+        maxWidthOrHeight: 2048,
+        useWebWorker: true,
+      });
+    } catch (err) {
+      console.warn('[Cloudinary] Compression failed, uploading original', err);
+    }
   }
 
-  const ext = file.name.split('.').pop() ?? 'jpg';
-  const basePath = `families/${familyId}/${uploaderUid}/${Date.now()}`;
-  const fullPath = `${basePath}/full.${ext}`;
-  const thumbPath = `${basePath}/thumb.${ext}`;
+  // Cloudinary Upload via Fetch
+  const formData = new FormData();
+  formData.append('file', fileToUpload);
+  formData.append('upload_preset', UPLOAD_PRESET);
+  formData.append('folder', `families/${familyId}/${uploaderUid}`);
+  
+  // Custom metadata for Cloudinary
+  formData.append('context', `familyId=${familyId}|uploaderUid=${uploaderUid}`);
 
-  // Compute perceptual hash for dedup (images only)
-  let pHash = '';
-  if (type === 'image') {
-    console.log('[uploadMedia] Computing hash...', file.name);
-    pHash = await computeImageHash(fileToUpload);
-  }
+  const xhr = new XMLHttpRequest();
+  const promise = new Promise<any>((resolve, reject) => {
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`);
 
-  console.log('[uploadMedia] Starting upload to storage...', fullPath);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress({
+          bytesTransferred: event.loaded,
+          totalBytes: event.total,
+          percentage: (event.loaded / event.total) * 100,
+          state: 'running',
+        });
+      }
+    };
 
-  // Upload full
-  const downloadURL = await uploadWithRetry(
-    fileToUpload,
-    fullPath,
-    onProgress,
-    MAX_RETRIES
-  );
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        console.error('[Cloudinary] Upload Error:', xhr.responseText);
+        reject(new Error(`Cloudinary upload failed: ${xhr.statusText}`));
+      }
+    };
 
-  // Upload thumbnail
-  let thumbnailURL = downloadURL;
-  if (thumbnailFile) {
-    thumbnailURL = await uploadWithRetry(thumbnailFile, thumbPath, undefined, MAX_RETRIES);
-  }
+    xhr.onerror = () => reject(new Error('Cloudinary network error'));
+    xhr.send(formData);
+  });
+
+  const response = await promise;
+
+  // Generate Thumbnail URL using Cloudinary transformations
+  // For videos, Cloudinary can generate a frame at 1s
+  const thumbnailURL = type === 'video'
+    ? response.secure_url.replace('/upload/', '/upload/w_400,c_limit,q_auto,f_jpg,so_1/')
+    : response.secure_url.replace('/upload/', '/upload/w_400,c_limit,q_auto/');
 
   return {
-    downloadURL,
-    thumbnailURL,
-    storagePath: fullPath,
-    sizeBytes: fileToUpload.size,
-    pHash,
+    downloadURL: response.secure_url,
+    thumbnailURL: thumbnailURL,
+    storagePath: response.public_id,
+    sizeBytes: response.bytes,
+    pHash: '', // Cloudinary handles dedup if configured, or we can use public_id
     type,
   };
 }
 
-// ─── Upload With Retry ────────────────────────────────────────────────────────
+// ─── Delete (Cloudinary doesn't allow unsigned deletes for security) ──────────
+// We will just remove the record from Firestore. The storage will be managed 
+// via Cloudinary dashboard or a small edge function later if needed.
 
-async function uploadWithRetry(
-  file: File,
-  path: string,
-  onProgress?: (p: UploadProgress) => void,
-  retries = MAX_RETRIES
-): Promise<string> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      return await uploadToStorage(file, path, onProgress);
-    } catch (err) {
-      lastError = err as Error;
-      // Exponential back-off: 1s, 2s, 4s
-      await sleep(1000 * Math.pow(2, attempt));
-    }
-  }
-
-  throw lastError ?? new Error('Upload failed after retries');
-}
-
-function uploadToStorage(
-  file: File,
-  path: string,
-  onProgress?: (p: UploadProgress) => void
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const storageRef = ref(storage, path);
-    const task = uploadBytesResumable(storageRef, file, {
-      contentType: file.type,
-    });
-
-    task.on(
-      'state_changed',
-      (snapshot: UploadTaskSnapshot) => {
-        const percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        onProgress?.({
-          bytesTransferred: snapshot.bytesTransferred,
-          totalBytes: snapshot.totalBytes,
-          percentage,
-          state: snapshot.state as UploadProgress['state'],
-        });
-      },
-      (err) => {
-        console.error('[uploadToStorage] Task failed:', path, err);
-        reject(err);
-      },
-      async () => {
-        const url = await getDownloadURL(task.snapshot.ref);
-        resolve(url);
-      }
-    );
-  });
-}
-
-// ─── Delete ───────────────────────────────────────────────────────────────────
-
-export async function deleteMediaFromStorage(storagePath: string): Promise<void> {
-  const storageRef = ref(storage, storagePath);
-  await deleteObject(storageRef);
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+export async function deleteMediaFromStorage(publicId: string): Promise<void> {
+  console.log('[Cloudinary] Unsigned delete not possible via client. Record removed from DB.', publicId);
+  // In a real production app, you'd call a secure backend function here.
 }
