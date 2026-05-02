@@ -12,7 +12,7 @@ import {
   localSignOut,
   type LocalUser,
 } from '../../lib/localStore';
-import { getFamilyMembers, regenerateInviteCode, leaveFamily } from '../../firebase/firestore';
+import { getFamilyMembers, regenerateInviteCode, leaveFamily, disbandFamily } from '../../firebase/firestore';
 import type { UserDoc } from '../../types';
 import { InviteCodeDisplay } from '../Onboarding/OnboardingScreen';
 
@@ -77,6 +77,24 @@ export default function ProfileScreen() {
       } else {
         await leaveFamily(userDoc.uid, family.id);
         toast.success('You have left the vault.');
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleDisbandFamily = async () => {
+    if (!family || !userDoc) return;
+    if (!isAdmin) return;
+
+    if (!window.confirm(`⚠️ WARNING: Are you sure you want to DISBAND "${family.name}"? This will delete the vault for everyone and you will have to create a new one.`)) return;
+
+    try {
+      if (!isFirebaseConfigured) {
+        toast('Local mode disband not implemented yet.');
+      } else {
+        await disbandFamily(userDoc.uid, family.id);
+        toast.success('The vault has been disbanded.');
       }
     } catch (e: any) {
       toast.error(e.message);
@@ -248,6 +266,14 @@ export default function ProfileScreen() {
           onClick={toggleTheme}
         />
         <SettingRow icon={<Shield size={18} />} label="Privacy & Security" onClick={() => toast('Coming soon!')} />
+        {isAdmin && family && (
+          <SettingRow 
+            icon={<LogOut size={18} color="var(--danger)" />} 
+            label={`Disband "${family.name}" Vault (Delete)`} 
+            onClick={handleDisbandFamily} 
+            danger 
+          />
+        )}
         {!isAdmin && family && (
           <SettingRow 
             icon={<LogOut size={18} color="var(--danger)" />} 

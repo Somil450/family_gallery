@@ -130,6 +130,33 @@ export async function leaveFamily(uid: string, familyId: string): Promise<void> 
   });
 }
 
+export async function disbandFamily(adminUid: string, familyId: string): Promise<void> {
+  const userRef = doc(db, 'users', adminUid);
+  const familyRef = doc(db, 'families', familyId);
+
+  await runTransaction(db, async (transaction) => {
+    const fSnap = await transaction.get(familyRef);
+    if (!fSnap.exists()) throw new Error('Family not found');
+    
+    const fData = fSnap.data() as FamilyDoc;
+    if (fData.adminUid !== adminUid) {
+      throw new Error('Only the admin can disband the vault');
+    }
+
+    // Delete family doc
+    transaction.delete(familyRef);
+    
+    // Reset admin user
+    transaction.update(userRef, {
+      familyId: null,
+      role: null,
+    });
+
+    // NOTE: Other members will be orphaned. 
+    // In a production app, we would use a Cloud Function to clean up all members.
+  });
+}
+
 export async function getFamilyDoc(familyId: string): Promise<FamilyDoc | null> {
   const snap = await getDoc(doc(db, 'families', familyId));
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as FamilyDoc) : null;
