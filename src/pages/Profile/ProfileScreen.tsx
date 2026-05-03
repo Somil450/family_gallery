@@ -25,6 +25,7 @@ export default function ProfileScreen() {
   const [localCode, setLocalCode] = useState<string | null>(null);
 
   const { isInstallable, isInstalled, promptInstall } = useInstallPrompt();
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   useEffect(() => {
     if (!family) return;
@@ -70,17 +71,7 @@ export default function ProfileScreen() {
     } else if (isInstalled) {
       toast.success('App is already installed!');
     } else {
-      const ua = navigator.userAgent || '';
-      const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-      const isInApp = /FBAN|FBAV|Instagram|LinkedIn|Messenger|Twitter|WhatsApp/.test(ua);
-
-      if (isInApp) {
-        toast('⚠️ You are in an In-App Browser. Please "Open in Chrome" or "Open in Safari" to install.', { duration: 6000 });
-      } else if (isIOS) {
-        toast('To install: Tap the "Share" button at the bottom and then "Add to Home Screen" 📲', { duration: 6000 });
-      } else {
-        toast('To install: Open the browser menu (⋮) and select "Install App" or "Add to Home screen"', { duration: 6000 });
-      }
+      setShowInstallGuide(true);
     }
   };
 
