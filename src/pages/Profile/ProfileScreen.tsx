@@ -365,6 +365,81 @@ export default function ProfileScreen() {
       </motion.div>
 
       <div style={{ height: 40 }} />
+
+      {/* Install Guide Modal */}
+      {showInstallGuide && (
+        <InstallGuideModal onClose={() => setShowInstallGuide(false)} />
+      )}
+    </div>
+  );
+}
+
+function InstallGuideModal({ onClose }: { onClose: () => void }) {
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  const isInApp = /FBAN|FBAV|Instagram|LinkedIn|Messenger|Twitter|WhatsApp/.test(ua);
+
+  return (
+    <div className="modal-overlay" style={{ zIndex: 3000 }} onClick={onClose}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="glass-card" 
+        style={{ 
+          width: '90%', maxWidth: 360, padding: 24, 
+          textAlign: 'center', position: 'relative',
+          border: '1px solid var(--accent)'
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+        
+        <div style={{ background: 'rgba(124,106,255,0.1)', width: 64, height: 64, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <Sparkles size={32} color="var(--accent)" />
+        </div>
+        
+        <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Install FamVault</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24 }}>
+          Get the full experience with a home screen icon and faster access.
+        </p>
+
+        {isInApp ? (
+          <div style={{ textAlign: 'left', background: 'rgba(239,68,68,0.1)', padding: 16, borderRadius: 12, border: '1px solid var(--danger)' }}>
+            <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--danger)', marginBottom: 4 }}>⚠️ In-App Browser Detected</p>
+            <p style={{ fontSize: 13 }}>Please tap the <strong>three dots (⋮)</strong> or <strong>Share icon</strong> and select <strong>"Open in Chrome"</strong> or <strong>"Open in Safari"</strong> to install FamVault.</p>
+          </div>
+        ) : isIOS ? (
+          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 24, height: 24, borderRadius: 12, background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800 }}>1</div>
+              <p style={{ fontSize: 14 }}>Tap the <strong>Share</strong> button (the square with an arrow) in Safari.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 24, height: 24, borderRadius: 12, background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800 }}>2</div>
+              <p style={{ fontSize: 14 }}>Scroll down and tap <strong>"Add to Home Screen"</strong>.</p>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 24, height: 24, borderRadius: 12, background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800 }}>1</div>
+              <p style={{ fontSize: 14 }}>Tap the <strong>Menu (⋮)</strong> in your browser's top/bottom right corner.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 24, height: 24, borderRadius: 12, background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800 }}>2</div>
+              <p style={{ fontSize: 14 }}>Select <strong>"Install App"</strong> or <strong>"Add to Home screen"</strong>.</p>
+            </div>
+          </div>
+        )}
+
+        <button 
+          className="btn-primary" 
+          onClick={onClose}
+          style={{ width: '100%', marginTop: 24 }}
+        >
+          Got it!
+        </button>
+      </motion.div>
     </div>
   );
 }
