@@ -1,73 +1,82 @@
-# React + TypeScript + Vite
+# 📸 FamVault – Your Private Family Memory Cloud
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+FamVault is a modern, secure, and privacy-first Progressive Web App (PWA) designed to store and share your family's precious memories. Built with **React**, **TypeScript**, and **Firebase**, it offers a premium experience for preserving photos and videos within a closed family circle.
 
-Currently, two official plugins are available:
+![FamVault Preview](https://famvault-dd2a1.web.app/icon-512.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🔗 Live Links
+- **Vercel (Primary):** [https://family-gallery-s2p1.vercel.app](https://family-gallery-s2p1.vercel.app)
+- **Firebase Hosting:** [https://famvault-dd2a1.web.app](https://famvault-dd2a1.web.app)
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **🔐 Private & Secure:** End-to-end cloud storage powered by Firebase.
+- **🏠 Family Vaults:** Create a private vault for your family and invite members via secure 6-character codes.
+- **📱 PWA Ready:** Installable on iOS, Android, and Desktop with a native-app feel.
+- **🌓 Dark/Light Mode:** Premium UI with glassmorphism effects and adaptive themes.
+- **📤 Smart Sharing:** Instant invite links and QR-ready codes for family onboarding.
+- **🖼️ Media Gallery:** High-performance gallery with lightbox support for photos and videos.
+- **🔄 Local Mode:** Full functionality even without Firebase (local-only storage fallback).
+- **🚀 Account Management:** Google Auth integration with easy account switching.
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend:** React 18, Vite, TypeScript
+- **Backend:** Firebase (Auth, Firestore, Storage)
+- **Animations:** Framer Motion
+- **Icons:** Lucide React
+- **Styling:** Vanilla CSS (Modern Design System)
+- **PWA:** Vite PWA Plugin with Service Worker integration
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🚀 Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Clone the repository
+```bash
+git clone https://github.com/Somil450/family_gallery.git
+cd family_gallery/web
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Install dependencies
+```bash
+npm install
 ```
+
+### 3. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+### 4. Run Development Server
+```bash
+npm run dev
+```
+
+## 📦 Deployment
+
+The app is set up for automatic deployment to **Vercel** and **Firebase Hosting**. Any changes pushed to the `main` branch are automatically built and deployed.
+
+## 📱 Installation (PWA)
+
+### **iOS (Safari)**
+1. Tap the **Share** icon.
+2. Select **"Add to Home Screen"**.
+
+### **Android (Chrome)**
+1. Tap the **"Install App"** button inside the Profile screen.
+2. Or open the menu (⋮) and select **"Install App"**.
+
+## 🛡️ Security Rules
+
+This project uses strict Firestore security rules to ensure:
+1. Only family members can read/write to their vault.
+2. Storage limits are enforced per family.
+3. Vault disbanding is restricted to admins or ownerless states.
+
+---
+Built with ❤️ by [Somil450](https://github.com/Somil450)
