@@ -2,8 +2,6 @@
 
 FamVault is a modern, secure, and privacy-first Progressive Web App (PWA) designed to store and share your family's precious memories. Built with **React**, **TypeScript**, and **Firebase**, it offers a premium experience for preserving photos and videos within a closed family circle.
 
-![FamVault Preview](https://famvault-dd2a1.web.app/icon-512.png)
-
 ## 🔗 Live Links
 - **Vercel (Primary):** [https://family-gallery-s2p1.vercel.app](https://family-gallery-s2p1.vercel.app)
 - **Firebase Hosting:** [https://famvault-dd2a1.web.app](https://famvault-dd2a1.web.app)
